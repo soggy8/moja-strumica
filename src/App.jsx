@@ -27,6 +27,30 @@ const features = [
     text: 'Compare prices faster and find the best option before you buy.',
     mkText: 'Споредувај цени побрзо и најди ја најдобрата опција пред купување.',
   },
+  {
+    title: 'Barbers and salons',
+    mkTitle: 'Бербери и салони',
+    text: 'Find barbers, cosmetic salons, beauty studios, wellness spots, and appointment-ready services.',
+    mkText: 'Најди бербери, козметички салони, студија за убавина, велнес места и услуги со термин.',
+  },
+  {
+    title: 'Concerts and events',
+    mkTitle: 'Концерти и настани',
+    text: 'See upcoming concerts, parties, festivals, sports, culture, and weekend plans before they pass you by.',
+    mkText: 'Следи концерти, забави, фестивали, спорт, култура и викенд планови пред да поминат.',
+  },
+  {
+    title: 'Kids and families',
+    mkTitle: 'Детски и семејни настани',
+    text: 'Discover kids events, workshops, birthday places, activities, playgrounds, and family-friendly ideas.',
+    mkText: 'Откриј детски настани, работилници, родендени, активности, игралишта и семејни идеи.',
+  },
+  {
+    title: 'City directory',
+    mkTitle: 'Градски именик',
+    text: 'Explore pharmacies, doctors, gyms, mechanics, taxis, real estate, jobs, ads, and useful local contacts.',
+    mkText: 'Пребарај аптеки, доктори, теретани, мајстори, такси, недвижности, работа, огласи и локални контакти.',
+  },
 ]
 
 const stats = [
@@ -72,12 +96,12 @@ function App() {
           <p className="eyebrow">Coming to Strumica on June 1</p>
           <h1>Moja Strumica is almost here.</h1>
           <p className="lead">
-            The city super app that brings local news, food delivery, shopping, prices, services, and everyday
-            information into one place.
+            The city super app that brings local news, food delivery, shopping, prices, services, events, salons,
+            local businesses, and everyday information into one place.
           </p>
           <p className="lead lead-mk">
             Градската супер апликација што ги собира локалните вести, доставата на храна, пазарувањето, цените,
-            услугите и секојдневните информации на едно место.
+            услугите, настаните, салоните, локалните бизниси и секојдневните информации на едно место.
           </p>
           <div className="hero-actions" aria-label="Launch information">
             <a href="#countdown" className="button-primary">
@@ -102,8 +126,10 @@ function App() {
             <div className="phone-list">
               <span>Latest news</span>
               <span>Food nearby</span>
+              <span>Events tonight</span>
+              <span>Barbers and salons</span>
               <span>Best prices</span>
-              <span>Local shopping</span>
+              <span>City services</span>
             </div>
           </div>
         </div>
@@ -140,9 +166,11 @@ function App() {
       <section className="section-block feature-section" id="features">
         <div className="section-heading">
           <p className="eyebrow">Built for everyday city life</p>
-          <h2>One app for the things Strumica needs most.</h2>
+          <h2>One app for almost everything Strumica needs.</h2>
           <p>
-            Моја Струмица ќе ги поврзе луѓето, бизнисите и информациите што го движат градот секој ден.
+            From news, food, shopping, and prices to barbers, cosmetic salons, concerts, kids events, jobs, taxis,
+            doctors, gyms, and local services. Моја Струмица ќе ги поврзе луѓето, бизнисите и информациите што го
+            движат градот секој ден.
           </p>
         </div>
 
@@ -164,10 +192,12 @@ function App() {
           <p className="eyebrow">Be ready</p>
           <h2>Strumica, your app is coming.</h2>
           <p>
-            Stay close. On June 1, Moja Strumica starts bringing the city together in a faster, simpler way.
+            Stay close. On June 1, Moja Strumica starts bringing the city together in a faster, simpler way, with
+            more of the places, services, events, and daily decisions people actually need.
           </p>
           <p className="mk-copy">
-            Биди подготвен. На 1 јуни, Моја Струмица почнува да го поврзува градот на побрз и поедноставен начин.
+            Биди подготвен. На 1 јуни, Моја Струмица почнува да го поврзува градот на побрз и поедноставен начин,
+            со повеќе места, услуги, настани и секојдневни одлуки што навистина им требаат на луѓето.
           </p>
         </div>
         <a href="#countdown" className="button-primary">
