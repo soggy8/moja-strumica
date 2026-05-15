@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+
+const WELCOME_DISMISSED_KEY = 'moja-strumica-welcome-dismissed'
 
 const launchDate = new Date('2026-06-01T00:00:00+02:00')
 
@@ -139,11 +141,13 @@ function ApplicationPage({ onBack }) {
           <h1>Bring your brand into Moja Strumica.</h1>
           <p className="lead">
             Companies, brands, shops, restaurants, salons, services, and local businesses can apply to be listed inside
-            the app before launch.
+            the app before launch — applying is free and there is no fee to submit this form or reserve a pre-launch
+            spot.
           </p>
           <p className="lead lead-mk">
             Компании, брендови, продавници, ресторани, салони, услуги и локални бизниси можат да аплицираат за место
-            во апликацијата пред лансирање.
+            во апликацијата пред лансирање — аплицирањето е бесплатно и нема никаква такса за аплицирање ниту за место пред
+            лансирање.
           </p>
         </div>
 
@@ -392,6 +396,53 @@ function AdminPage({ onBack }) {
   )
 }
 
+function SiteNavbar({ page, onGoHome, onGoApply }) {
+  function handleBrandClick() {
+    if (page !== 'home') onGoHome()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  return (
+    <header className="site-navbar">
+      <nav className="site-navbar-shell section-grid" aria-label="Primary navigation">
+        <button type="button" className="site-navbar-brand" onClick={handleBrandClick}>
+          <span className="site-navbar-logo-dot" aria-hidden />
+          <span>Moja Strumica</span>
+        </button>
+
+        <div className="site-navbar-links">
+          {page === 'home' ? (
+            <>
+              <a href="#countdown" className="site-navbar-link">
+                Countdown
+              </a>
+              <a href="#features" className="site-navbar-link">
+                Features
+              </a>
+            </>
+          ) : (
+            <span className={`site-navbar-pill-label ${page === 'admin' ? 'is-muted' : ''}`}>
+              {page === 'application' ? 'Business application' : 'Admin'}
+            </span>
+          )}
+        </div>
+
+        <div className="site-navbar-cta-wrap">
+          {page === 'home' ? (
+            <button type="button" className="button-primary site-navbar-cta" onClick={onGoApply}>
+              Apply free
+            </button>
+          ) : (
+            <button type="button" className="site-navbar-home-link" onClick={onGoHome}>
+              ← Home
+            </button>
+          )}
+        </div>
+      </nav>
+    </header>
+  )
+}
+
 function getTimeRemaining() {
   const total = Math.max(launchDate.getTime() - Date.now(), 0)
   const seconds = Math.floor((total / 1000) % 60)
@@ -402,8 +453,64 @@ function getTimeRemaining() {
   return { total, days, hours, minutes, seconds }
 }
 
+function WelcomeModal({ open, onApply, onDismiss }) {
+  useEffect(() => {
+    if (!open) return
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') onDismiss()
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    const overflowBefore = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = overflowBefore
+    }
+  }, [open, onDismiss])
+
+  if (!open) return null
+
+  return (
+    <div
+      className="welcome-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="welcome-dialog-title"
+      aria-describedby="welcome-dialog-desc"
+    >
+      <div className="welcome-dialog">
+        <p className="eyebrow">Pre-launch offer</p>
+        <h2 id="welcome-dialog-title" className="welcome-dialog-title">
+          Apply for free
+        </h2>
+        <p id="welcome-dialog-desc" className="welcome-dialog-lead">
+          You are applying to list your business inside Moja Strumica before launch — so customers can find shops, restaurants,
+          salons, services, and brands in Strumica’s new city super app starting June 1.
+        </p>
+        <p className="welcome-dialog-lead welcome-dialog-lead-mk">
+          Аплицираш за место во апликацијата пред лансирање — твојот бренд се појавува каде луѓето пребаруваат локални
+          бизниси во градот.
+        </p>
+        <p className="welcome-dialog-hook">Free forever to apply · Join early while spots are still open</p>
+
+        <button type="button" className="welcome-apply-btn" onClick={onApply}>
+          Apply now — free
+        </button>
+
+        <button type="button" className="welcome-dismiss-link" onClick={onDismiss}>
+          Continue browsing
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [activePage, setActivePage] = useState('home')
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(() => getTimeRemaining())
   const countdownItems = useMemo(
     () => [
@@ -423,140 +530,185 @@ function App() {
     return () => clearInterval(intervalId)
   }, [])
 
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(WELCOME_DISMISSED_KEY)) setShowWelcomeModal(true)
+    } catch {
+      setShowWelcomeModal(true)
+    }
+  }, [])
+
+  const dismissWelcomeModal = useCallback(() => {
+    try {
+      localStorage.setItem(WELCOME_DISMISSED_KEY, '1')
+    } catch {
+      /* ignore */
+    }
+    setShowWelcomeModal(false)
+  }, [])
+
+  const applyFromWelcomeModal = useCallback(() => {
+    try {
+      localStorage.setItem(WELCOME_DISMISSED_KEY, '1')
+    } catch {
+      /* ignore */
+    }
+    setShowWelcomeModal(false)
+    setActivePage('application')
+  }, [])
+
+  function goHome() {
+    setActivePage('home')
+  }
+
   if (activePage === 'application') {
-    return <ApplicationPage onBack={() => setActivePage('home')} />
+    return (
+      <>
+        <SiteNavbar page="application" onGoHome={goHome} onGoApply={() => setActivePage('application')} />
+        <ApplicationPage onBack={goHome} />
+      </>
+    )
   }
 
   if (activePage === 'admin') {
-    return <AdminPage onBack={() => setActivePage('home')} />
+    return (
+      <>
+        <SiteNavbar page="admin" onGoHome={goHome} onGoApply={() => setActivePage('application')} />
+        <AdminPage onBack={goHome} />
+      </>
+    )
   }
 
   return (
-    <main className="page-shell">
-      <section className="hero section-grid">
-        <div className="hero-copy">
-          <p className="eyebrow">Coming to Strumica on June 1</p>
-          <h1>Moja Strumica is almost here.</h1>
-          <p className="lead">
-            The city super app that brings local news, food delivery, shopping, prices, services, events, salons,
-            local businesses, and everyday information into one place.
-          </p>
-          <p className="lead lead-mk">
-            Градската супер апликација што ги собира локалните вести, доставата на храна, пазарувањето, цените,
-            услугите, настаните, салоните, локалните бизниси и секојдневните информации на едно место.
-          </p>
-          <div className="hero-actions" aria-label="Launch information">
-            <button type="button" className="button-primary" onClick={() => setActivePage('application')}>
-              Apply as a business
-            </button>
-            <a href="#countdown" className="button-secondary">
-              Watch the countdown
-            </a>
-            <a href="#features" className="button-secondary">
-              See what is coming
-            </a>
-          </div>
-        </div>
-
-        <div className="app-preview" aria-label="Moja Strumica app preview">
-          <div className="phone-frame">
-            <div className="phone-status">
-              <span>9:41</span>
-              <span>Moja Strumica</span>
-            </div>
-            <div className="phone-card spotlight-card">
-              <span className="card-label">Today / Денес</span>
-              <strong>Everything in Strumica, one tap away.</strong>
-            </div>
-            <div className="phone-list">
-              <span>Latest news</span>
-              <span>Food nearby</span>
-              <span>Events tonight</span>
-              <span>Barbers and salons</span>
-              <span>Best prices</span>
-              <span>City services</span>
+    <>
+      <SiteNavbar page="home" onGoHome={goHome} onGoApply={() => setActivePage('application')} />
+      <main className="page-shell">
+        <WelcomeModal open={showWelcomeModal} onApply={applyFromWelcomeModal} onDismiss={dismissWelcomeModal} />
+        <section className="hero section-grid">
+          <div className="hero-copy">
+            <p className="eyebrow">Coming to Strumica on June 1</p>
+            <h1>Moja Strumica is almost here.</h1>
+            <p className="lead">
+              The city super app that brings local news, food delivery, shopping, prices, services, events, salons,
+              local businesses, and everyday information into one place.
+            </p>
+            <p className="lead lead-mk">
+              Градската супер апликација што ги собира локалните вести, доставата на храна, пазарувањето, цените,
+              услугите, настаните, салоните, локалните бизниси и секојдневните информации на едно место.
+            </p>
+            <div className="hero-actions" aria-label="Launch information">
+              <button type="button" className="button-primary" onClick={() => setActivePage('application')}>
+                Apply as a business for free
+              </button>
+              <a href="#countdown" className="button-secondary">
+                Watch the countdown
+              </a>
+              <a href="#features" className="button-secondary">
+                See what is coming
+              </a>
             </div>
           </div>
-        </div>
-      </section>
 
-      <section className="stats-strip" aria-label="Launch highlights">
-        {stats.map((stat) => (
-          <div className="stat-card" key={stat.label}>
-            <strong>{stat.value}</strong>
-            <span>{stat.label}</span>
-            <small>{stat.mkLabel}</small>
+          <div className="app-preview" aria-label="Moja Strumica app preview">
+            <div className="phone-frame">
+              <div className="phone-status">
+                <span>9:41</span>
+                <span>Moja Strumica</span>
+              </div>
+              <div className="phone-card spotlight-card">
+                <span className="card-label">Today / Денес</span>
+                <strong>Everything in Strumica, one tap away.</strong>
+              </div>
+              <div className="phone-list">
+                <span>Latest news</span>
+                <span>Food nearby</span>
+                <span>Events tonight</span>
+                <span>Barbers and salons</span>
+                <span>Best prices</span>
+                <span>City services</span>
+              </div>
+            </div>
           </div>
-        ))}
-      </section>
+        </section>
 
-      <section className="section-block" id="countdown">
-        <div className="section-heading">
-          <p className="eyebrow">The countdown has started</p>
-          <h2>Launching June 1, 2026.</h2>
-          <p>Лансирање на 1 јуни 2026. Струмица добива една апликација за секојдневниот градски живот.</p>
-        </div>
-
-        <div className="countdown-grid" aria-live="polite">
-          {countdownItems.map((item) => (
-            <div className="countdown-card" key={item.label}>
-              <strong>{String(item.value).padStart(2, '0')}</strong>
-              <span>{item.label}</span>
-              <small>{item.mkLabel}</small>
+        <section className="stats-strip" aria-label="Launch highlights">
+          {stats.map((stat) => (
+            <div className="stat-card" key={stat.label}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+              <small>{stat.mkLabel}</small>
             </div>
           ))}
-        </div>
-      </section>
+        </section>
 
-      <section className="section-block feature-section" id="features">
-        <div className="section-heading">
-          <p className="eyebrow">Built for everyday city life</p>
-          <h2>One app for almost everything Strumica needs.</h2>
-          <p>
-            From news, food, shopping, and prices to barbers, cosmetic salons, concerts, kids events, jobs, taxis,
-            doctors, gyms, and local services. Моја Струмица ќе ги поврзе луѓето, бизнисите и информациите што го
-            движат градот секој ден.
-          </p>
-        </div>
+        <section className="section-block" id="countdown">
+          <div className="section-heading">
+            <p className="eyebrow">The countdown has started</p>
+            <h2>Launching June 1, 2026.</h2>
+            <p>Лансирање на 1 јуни 2026. Струмица добива една апликација за секојдневниот градски живот.</p>
+          </div>
 
-        <div className="feature-grid">
-          {features.map((feature) => (
-            <article className="feature-card" key={feature.title}>
-              <div className="feature-dot" />
-              <h3>{feature.title}</h3>
-              <h4>{feature.mkTitle}</h4>
-              <p>{feature.text}</p>
-              <p className="mk-copy">{feature.mkText}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+          <div className="countdown-grid" aria-live="polite">
+            {countdownItems.map((item) => (
+              <div className="countdown-card" key={item.label}>
+                <strong>{String(item.value).padStart(2, '0')}</strong>
+                <span>{item.label}</span>
+                <small>{item.mkLabel}</small>
+              </div>
+            ))}
+          </div>
+        </section>
 
-      <section className="cta-panel">
-        <div>
-          <p className="eyebrow">Be ready</p>
-          <h2>Strumica, your app is coming.</h2>
-          <p>
-            Stay close. On June 1, Moja Strumica starts bringing the city together in a faster, simpler way, with
-            more of the places, services, events, and daily decisions people actually need.
-          </p>
-          <p className="mk-copy">
-            Биди подготвен. На 1 јуни, Моја Струмица почнува да го поврзува градот на побрз и поедноставен начин,
-            со повеќе места, услуги, настани и секојдневни одлуки што навистина им требаат на луѓето.
-          </p>
-        </div>
-        <button type="button" className="button-primary" onClick={() => setActivePage('application')}>
-          Apply for a spot
-        </button>
-      </section>
-      <button
-        type="button"
-        className="hidden-admin-button"
-        onClick={() => setActivePage('admin')}
-        aria-label="Admin access"
-      />
+        <section className="section-block feature-section" id="features">
+          <div className="section-heading">
+            <p className="eyebrow">Built for everyday city life</p>
+            <h2>One app for almost everything Strumica needs.</h2>
+            <p>
+              From news, food, shopping, and prices to barbers, cosmetic salons, concerts, kids events, jobs, taxis,
+              doctors, gyms, and local services. Моја Струмица ќе ги поврзе луѓето, бизнисите и информациите што го
+              движат градот секој ден.
+            </p>
+          </div>
+
+          <div className="feature-grid">
+            {features.map((feature) => (
+              <article className="feature-card" key={feature.title}>
+                <div className="feature-dot" />
+                <h3>{feature.title}</h3>
+                <h4>{feature.mkTitle}</h4>
+                <p>{feature.text}</p>
+                <p className="mk-copy">{feature.mkText}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="cta-panel">
+          <div>
+            <p className="eyebrow">Be ready</p>
+            <h2>Strumica, your app is coming.</h2>
+            <p>
+              Stay close. On June 1, Moja Strumica starts bringing the city together in a faster, simpler way, with
+              more of the places, services, events, and daily decisions people actually need.
+            </p>
+            <p className="mk-copy">
+              Биди подготвен. На 1 јуни, Моја Струмица почнува да го поврзува градот на побрз и поедноставен начин,
+              со повеќе места, услуги, настани и секојдневни одлуки што навистина им требаат на луѓето.
+            </p>
+          </div>
+          <button type="button" className="button-primary" onClick={() => setActivePage('application')}>
+            Apply for a spot
+          </button>
+        </section>
+        <button
+          type="button"
+          className="hidden-admin-button"
+          onClick={() => setActivePage('admin')}
+          aria-label="Admin access"
+        />
 
     </main>
+    </>
   )
 }
 
