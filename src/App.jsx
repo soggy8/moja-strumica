@@ -59,7 +59,8 @@ const stats = [
   { value: '1', label: 'App for everything', mkLabel: 'Апликација за се' },
 ]
 
-const APPLICATION_API_URL = 'https://127.0.0.1:5000/api/applications'
+const APPLICATION_API_URL = 'http://127.0.0.1:5000/api/applications'
+const ADMIN_APPLICATIONS_API_URL = 'http://127.0.0.1:5000/api/admin/applications'
 
 const emptyApplicationForm = {
   name: '',
@@ -227,6 +228,170 @@ function ApplicationPage({ onBack }) {
   )
 }
 
+function AdminPage({ onBack }) {
+  const [adminPassword, setAdminPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [applications, setApplications] = useState([])
+  const [statusMessage, setStatusMessage] = useState('')
+  const [statusType, setStatusType] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  async function loadApplications(event) {
+    event.preventDefault()
+
+    setIsLoading(true)
+    setStatusMessage('')
+    setStatusType('')
+
+    try {
+      const response = await fetch(ADMIN_APPLICATIONS_API_URL, {
+        method: 'GET',
+        headers: {
+          'X-Admin-Password': adminPassword,
+        },
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Could not load applications.')
+      }
+
+      const loadedApplications = Array.isArray(result.applications) ? result.applications : []
+
+      setApplications(loadedApplications)
+      setIsLoggedIn(true)
+      setStatusType('success')
+      setStatusMessage(`Loaded ${loadedApplications.length} application(s).`)
+    } catch (error) {
+      setApplications([])
+      setIsLoggedIn(false)
+      setStatusType('error')
+      setStatusMessage(error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  function handleLogout() {
+    setAdminPassword('')
+    setShowPassword(false)
+    setApplications([])
+    setStatusMessage('')
+    setStatusType('')
+    setIsLoggedIn(false)
+  }
+
+  function formatDate(dateValue) {
+    if (!dateValue) return '-'
+
+    return new Date(dateValue.replace(' ', 'T')).toLocaleString()
+  }
+
+  return (
+    <main className="page-shell admin-shell">
+      <div className="application-nav section-grid">
+        <button type="button" className="button-secondary" onClick={onBack}>
+          ← Back to home
+        </button>
+        <span>Admin access</span>
+      </div>
+
+      {!isLoggedIn ? (
+        <section className="admin-page section-grid">
+          <div className="section-heading">
+            <p className="eyebrow">Admin login</p>
+            <h1>Login</h1>
+            <p>Enter the admin password to view submitted business applications.</p>
+          </div>
+
+          <form className="admin-login-card" onSubmit={loadApplications}>
+            <label>
+              Admin password
+              <div className="password-field">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={adminPassword}
+                  onChange={(event) => setAdminPassword(event.target.value)}
+                  placeholder="Enter admin password"
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword((currentValue) => !currentValue)}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </label>
+
+            <button type="submit" className="button-primary" disabled={isLoading}>
+              {isLoading ? 'Checking...' : 'Login'}
+            </button>
+
+            {statusMessage && <div className={`application-message ${statusType}`}>{statusMessage}</div>}
+          </form>
+        </section>
+      ) : (
+        <section className="admin-page section-grid">
+          <div className="admin-header-row">
+            <div className="section-heading">
+              <p className="eyebrow">Admin panel</p>
+              <h1>Applications</h1>
+              <p>View all businesses that applied for a place inside Moja Strumica.</p>
+            </div>
+
+            <button type="button" className="button-secondary" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+
+          {statusMessage && <div className={`application-message ${statusType}`}>{statusMessage}</div>}
+
+          <div className="admin-table-card">
+            {applications.length === 0 ? (
+              <p className="admin-empty">No applications have been submitted yet.</p>
+            ) : (
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Surname</th>
+                      <th>Company</th>
+                      <th>Email</th>
+                      <th>Phone</th>
+                      <th>Submitted</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {applications.map((application) => (
+                      <tr key={application.id}>
+                        <td>{application.id}</td>
+                        <td>{application.name}</td>
+                        <td>{application.surname}</td>
+                        <td>{application.company_name}</td>
+                        <td>{application.email}</td>
+                        <td>{application.phone}</td>
+                        <td>{formatDate(application.created_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+    </main>
+  )
+}
+
 function getTimeRemaining() {
   const total = Math.max(launchDate.getTime() - Date.now(), 0)
   const seconds = Math.floor((total / 1000) % 60)
@@ -260,6 +425,10 @@ function App() {
 
   if (activePage === 'application') {
     return <ApplicationPage onBack={() => setActivePage('home')} />
+  }
+
+  if (activePage === 'admin') {
+    return <AdminPage onBack={() => setActivePage('home')} />
   }
 
   return (
@@ -380,6 +549,13 @@ function App() {
           Apply for a spot
         </button>
       </section>
+      <button
+        type="button"
+        className="hidden-admin-button"
+        onClick={() => setActivePage('admin')}
+        aria-label="Admin access"
+      />
+
     </main>
   )
 }

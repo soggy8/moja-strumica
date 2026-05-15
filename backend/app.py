@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
+import os
 from pathlib import Path
 
 app = Flask(__name__)
@@ -8,6 +9,9 @@ CORS(app)
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "applications.db"
+ADMIN_PASSWORD = os.getenv(
+    "ADMIN_PASSWORD", "admin123"
+)  # Default password for admin access
 
 
 def get_db_connection():
@@ -90,6 +94,31 @@ def create_application():
             jsonify({"error": "An error occurred while processing the application"}),
             500,
         )
+
+
+@app.route("/api/admin/applications", methods=["GET"])
+def get_all_applications():
+    admin_password = request.headers.get("X-Admin-Password", "")
+
+    if admin_password != ADMIN_PASSWORD:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    try:
+        connection = get_db_connection()
+
+        applications = connection.execute("""
+            SELECT id, name, surname, company_name, email, phone, created_at
+            FROM applications
+            ORDER BY created_at DESC                """).fetchall()
+
+        connection.close()
+
+        applications_list = [dict(applications) for applications in applications]
+
+        return jsonify({"applications": applications_list}), 200
+
+    except Exception:
+        return jsonify({"error": "An error occurred while loading applications"}), 500
 
 
 if __name__ == "__main__":
