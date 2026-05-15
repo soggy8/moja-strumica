@@ -59,6 +59,174 @@ const stats = [
   { value: '1', label: 'App for everything', mkLabel: 'Апликација за се' },
 ]
 
+const APPLICATION_API_URL = 'https://127.0.0.1:5000/api/applications'
+
+const emptyApplicationForm = {
+  name: '',
+  surname: '',
+  companyName: '',
+  email: '',
+  phone: '',
+}
+
+function ApplicationPage({ onBack }) {
+  const [formData, setFormData] = useState(emptyApplicationForm)
+  const [statusMessage, setStatusMessage] = useState('')
+  const [statusType, setStatusType] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  function handleChange(event) {
+    const { name, value } = event.target
+
+    setFormData((currentData) => ({
+      ...currentData,
+      [name]: value,
+    }))
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+
+    setIsSubmitting(true)
+    setStatusMessage('')
+    setStatusType('')
+
+    try {
+      const response = await fetch(APPLICATION_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          surname: formData.surname,
+          company_name: formData.companyName,
+          email: formData.email,
+          phone: formData.phone,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Application could not be submitted.')
+      }
+
+      setStatusType('success')
+      setStatusMessage('Application submitted successfully. We will contact you soon.')
+      setFormData(emptyApplicationForm)
+    } catch (error) {
+      setStatusType('error')
+      setStatusMessage(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <main className="page-shell application-shell">
+      <div className="application-nav section-grid">
+        <button type="button" className="button-secondary" onClick={onBack}>
+          ← Back to home
+        </button>
+        <span>Business applications / Апликации за бизниси</span>
+      </div>
+
+      <section className="application-page section-grid">
+        <div className="application-copy">
+          <p className="eyebrow">Apply for a place in the app</p>
+          <h1>Bring your brand into Moja Strumica.</h1>
+          <p className="lead">
+            Companies, brands, shops, restaurants, salons, services, and local businesses can apply to be listed inside
+            the app before launch.
+          </p>
+          <p className="lead lead-mk">
+            Компании, брендови, продавници, ресторани, салони, услуги и локални бизниси можат да аплицираат за место
+            во апликацијата пред лансирање.
+          </p>
+        </div>
+
+        <form className="application-form" onSubmit={handleSubmit}>
+          <div className="form-header">
+            <p className="eyebrow">Application form</p>
+            <h2>Submit your details.</h2>
+          </div>
+
+          <label>
+            Name
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter your name"
+              required
+            />
+          </label>
+
+          <label>
+            Surname
+            <input
+              type="text"
+              name="surname"
+              value={formData.surname}
+              onChange={handleChange}
+              placeholder="Enter your surname"
+              required
+            />
+          </label>
+
+          <label>
+            Company name
+            <input
+              type="text"
+              name="companyName"
+              value={formData.companyName}
+              onChange={handleChange}
+              placeholder="Enter company name"
+              required
+            />
+          </label>
+
+          <label>
+            Email
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="company@email.com"
+              required
+            />
+          </label>
+
+          <label>
+            Phone number
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="+389 XX XXX XXX"
+              required
+            />
+          </label>
+
+          {statusMessage && <div className={`application-message ${statusType}`}>{statusMessage}</div>}
+
+          <button type="submit" className="button-primary" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit application'}
+          </button>
+
+          <p className="form-note">
+            Each email and phone number can submit only one application.
+          </p>
+        </form>
+      </section>
+    </main>
+  )
+}
+
 function getTimeRemaining() {
   const total = Math.max(launchDate.getTime() - Date.now(), 0)
   const seconds = Math.floor((total / 1000) % 60)
@@ -70,6 +238,7 @@ function getTimeRemaining() {
 }
 
 function App() {
+  const [activePage, setActivePage] = useState('home')
   const [timeRemaining, setTimeRemaining] = useState(() => getTimeRemaining())
   const countdownItems = useMemo(
     () => [
@@ -89,6 +258,10 @@ function App() {
     return () => clearInterval(intervalId)
   }, [])
 
+  if (activePage === 'application') {
+    return <ApplicationPage onBack={() => setActivePage('home')} />
+  }
+
   return (
     <main className="page-shell">
       <section className="hero section-grid">
@@ -104,7 +277,10 @@ function App() {
             услугите, настаните, салоните, локалните бизниси и секојдневните информации на едно место.
           </p>
           <div className="hero-actions" aria-label="Launch information">
-            <a href="#countdown" className="button-primary">
+            <button type="button" className="button-primary" onClick={() => setActivePage('application')}>
+              Apply as a business
+            </button>
+            <a href="#countdown" className="button-secondary">
               Watch the countdown
             </a>
             <a href="#features" className="button-secondary">
@@ -200,9 +376,9 @@ function App() {
             со повеќе места, услуги, настани и секојдневни одлуки што навистина им требаат на луѓето.
           </p>
         </div>
-        <a href="#countdown" className="button-primary">
-          Countdown to launch
-        </a>
+        <button type="button" className="button-primary" onClick={() => setActivePage('application')}>
+          Apply for a spot
+        </button>
       </section>
     </main>
   )
