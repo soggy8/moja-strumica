@@ -76,7 +76,7 @@ async function readApiResponse(response) {
   } catch {
     if (text.trimStart().startsWith('<')) {
       throw new Error(
-        'The server returned a web page instead of API data. In Caddy, proxy /api/* to port 5000 before the SPA fallback, and ensure moja-strumica-web is running.',
+        'The server returned a web page instead of API data. In Caddy, proxy /api/* to the moja-strumica gunicorn port (see systemd unit, often 5052) before the SPA fallback.',
       )
     }
 

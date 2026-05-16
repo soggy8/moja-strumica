@@ -1,0 +1,22 @@
+[Unit]
+Description=Moja Strumica API (gunicorn)
+After=network.target
+
+[Service]
+User=andrej
+Group=andrej
+WorkingDirectory=/home/andrej/moja-strumica/backend
+Environment=DATABASE_PATH=/var/lib/moja-strumica/applications.db
+Environment=ADMIN_PASSWORD=change-me
+# Temporary debugging: Environment=SHOW_API_ERRORS=1
+ExecStart=/home/andrej/moja-strumica/backend/venv/bin/gunicorn -w 2 -b 127.0.0.1:5052 main:app
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
+# One-time setup:
+#   sudo mkdir -p /var/lib/moja-strumica
+#   sudo chown andrej:andrej /var/lib/moja-strumica
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now moja-strumica-web.service

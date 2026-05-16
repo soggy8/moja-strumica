@@ -4,9 +4,10 @@
 your-domain.com {
 	encode gzip
 
+	# Port must match gunicorn in moja-strumica-web.service (e.g. 5052, not 5000).
 	@api path /api/*
 	handle @api {
-		reverse_proxy 127.0.0.1:5000
+		reverse_proxy 127.0.0.1:5052
 	}
 
 	handle {
