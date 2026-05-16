@@ -64,6 +64,26 @@ const stats = [
 const APPLICATION_API_URL = '/api/applications'
 const ADMIN_APPLICATIONS_API_URL = '/api/admin/applications'
 
+async function readApiResponse(response) {
+  const text = await response.text()
+
+  if (!text) {
+    return null
+  }
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    if (text.trimStart().startsWith('<')) {
+      throw new Error(
+        'The server returned a web page instead of API data. In Caddy, proxy /api/* to port 5000 before the SPA fallback, and ensure moja-strumica-web is running.',
+      )
+    }
+
+    throw new Error('The server returned an invalid API response.')
+  }
+}
+
 const emptyApplicationForm = {
   name: '',
   surname: '',
@@ -109,10 +129,10 @@ function ApplicationPage({ onBack }) {
         }),
       })
 
-      const result = await response.json()
+      const result = await readApiResponse(response)
 
       if (!response.ok) {
-        throw new Error(result.error || 'Application could not be submitted.')
+        throw new Error(result?.error || 'Application could not be submitted.')
       }
 
       setStatusType('success')
@@ -256,13 +276,13 @@ function AdminPage({ onBack }) {
         },
       })
 
-      const result = await response.json()
+      const result = await readApiResponse(response)
 
       if (!response.ok) {
-        throw new Error(result.error || 'Could not load applications.')
+        throw new Error(result?.error || 'Could not load applications.')
       }
 
-      const loadedApplications = Array.isArray(result.applications) ? result.applications : []
+      const loadedApplications = Array.isArray(result?.applications) ? result.applications : []
 
       setApplications(loadedApplications)
       setIsLoggedIn(true)

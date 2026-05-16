@@ -1,0 +1,17 @@
+# Caddy v2 — API must be handled BEFORE try_files / file_server,
+# otherwise /api/* returns index.html and the app shows a JSON parse error.
+
+your-domain.com {
+	encode gzip
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy 127.0.0.1:5000
+	}
+
+	handle {
+		root * /home/andrej/moja-strumica/dist
+		try_files {path} /index.html
+		file_server
+	}
+}
