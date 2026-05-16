@@ -61,8 +61,8 @@ const stats = [
   { value: '1', label: 'App for everything', mkLabel: 'Апликација за се' },
 ]
 
-const APPLICATION_API_URL = 'http://127.0.0.1:5000/api/applications'
-const ADMIN_APPLICATIONS_API_URL = 'http://127.0.0.1:5000/api/admin/applications'
+const APPLICATION_API_URL = '/api/applications'
+const ADMIN_APPLICATIONS_API_URL = '/api/admin/applications'
 
 const emptyApplicationForm = {
   name: '',

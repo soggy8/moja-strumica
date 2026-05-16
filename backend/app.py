@@ -113,7 +113,7 @@ def get_all_applications():
 
         connection.close()
 
-        applications_list = [dict(applications) for applications in applications]
+        applications_list = [dict(row) for row in applications]
 
         return jsonify({"applications": applications_list}), 200
 
