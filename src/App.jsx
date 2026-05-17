@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const WELCOME_DISMISSED_KEY = 'moja-strumica-welcome-dismissed'
 
-const launchDate = new Date('2026-06-01T00:00:00+02:00')
+const launchDate = new Date('2026-06-10T00:00:00+02:00')
 
 const features = [
   {
@@ -56,7 +56,7 @@ const features = [
 ]
 
 const stats = [
-  { value: '01', label: 'June launch', mkLabel: 'Лансирање во јуни' },
+  { value: '10', label: 'June launch', mkLabel: 'Лансирање во јуни' },
   { value: '24/7', label: 'City updates', mkLabel: 'Градски новости' },
   { value: '1', label: 'App for everything', mkLabel: 'Апликација за се' },
 ]
@@ -727,7 +727,7 @@ function App() {
           aria-label="Admin access"
         />
 
-    </main>
+      </main>
     </>
   )
 }
