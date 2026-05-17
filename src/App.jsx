@@ -530,52 +530,142 @@ function AdminPage({ onBack }) {
 }
 
 function SiteNavbar({ page, onGoHome, onGoApply }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const closeMobileMenu = useCallback(() => {
+    setMobileMenuOpen(false)
+  }, [])
+
+  useEffect(() => {
+    closeMobileMenu()
+  }, [page, closeMobileMenu])
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') closeMobileMenu()
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    const overflowBefore = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = overflowBefore
+    }
+  }, [mobileMenuOpen, closeMobileMenu])
+
   function handleBrandClick() {
+    closeMobileMenu()
     if (page !== 'home') onGoHome()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
-    <header className="site-navbar">
-      <nav className="site-navbar-shell section-grid" aria-label="Primary navigation">
-        <button type="button" className="site-navbar-brand" onClick={handleBrandClick}>
-          <span className="site-navbar-logo-dot" aria-hidden />
-          <span>Moja Strumica</span>
-        </button>
+    <>
+      <header className="site-navbar">
+        <nav className="site-navbar-shell section-grid" aria-label="Primary navigation">
+          <button type="button" className="site-navbar-brand" onClick={handleBrandClick}>
+            <span className="site-navbar-logo-dot" aria-hidden />
+            <span>Moja Strumica</span>
+          </button>
 
-        <div className="site-navbar-links">
-          {page === 'home' ? (
-            <>
-              <a href="#countdown" className="site-navbar-link">
+          <div className="site-navbar-links site-navbar-links--desktop">
+            {page === 'home' ? (
+              <>
+                <a href="#countdown" className="site-navbar-link">
+                  Countdown
+                </a>
+                <a href="#features" className="site-navbar-link">
+                  Features
+                </a>
+                <a href="#pricing" className="site-navbar-link">
+                  Pricing
+                </a>
+              </>
+            ) : (
+              <span className={`site-navbar-pill-label ${page === 'admin' ? 'is-muted' : ''}`}>
+                {page === 'application' ? 'Business application' : 'Admin'}
+              </span>
+            )}
+          </div>
+
+          <div className="site-navbar-actions">
+            {page === 'home' ? (
+              <>
+                <button
+                  type="button"
+                  className="button-primary site-navbar-cta site-navbar-cta--wide"
+                  onClick={onGoApply}
+                >
+                  Apply free
+                </button>
+                <button
+                  type="button"
+                  className={`site-navbar-menu-btn${mobileMenuOpen ? ' site-navbar-menu-btn--open' : ''}`}
+                  aria-expanded={mobileMenuOpen}
+                  aria-controls="site-navbar-mobile-panel"
+                  onClick={() => setMobileMenuOpen((open) => !open)}
+                >
+                  <span className="site-navbar-menu-bun" aria-hidden>
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                  <span className="site-navbar-sr-only">{mobileMenuOpen ? 'Close menu' : 'Open menu'}</span>
+                </button>
+              </>
+            ) : (
+              <button type="button" className="site-navbar-home-link" onClick={onGoHome}>
+                ← Home
+              </button>
+            )}
+          </div>
+        </nav>
+      </header>
+
+      {page === 'home' && (
+        <>
+          <div
+            className={`site-navbar-scrim${mobileMenuOpen ? ' site-navbar-scrim--visible' : ''}`}
+            onClick={closeMobileMenu}
+            aria-hidden="true"
+          />
+          <div
+            id="site-navbar-mobile-panel"
+            className={`site-navbar-mobile-panel${mobileMenuOpen ? ' site-navbar-mobile-panel--open' : ''}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+            aria-hidden={!mobileMenuOpen}
+          >
+            <div className="site-navbar-mobile-panel-inner">
+              <a href="#countdown" className="site-navbar-mobile-link" onClick={closeMobileMenu}>
                 Countdown
               </a>
-              <a href="#features" className="site-navbar-link">
+              <a href="#features" className="site-navbar-mobile-link" onClick={closeMobileMenu}>
                 Features
               </a>
-              <a href="#pricing" className="site-navbar-link">
+              <a href="#pricing" className="site-navbar-mobile-link" onClick={closeMobileMenu}>
                 Pricing
               </a>
-            </>
-          ) : (
-            <span className={`site-navbar-pill-label ${page === 'admin' ? 'is-muted' : ''}`}>
-              {page === 'application' ? 'Business application' : 'Admin'}
-            </span>
-          )}
-        </div>
-
-        <div className="site-navbar-cta-wrap">
-          {page === 'home' ? (
-            <button type="button" className="button-primary site-navbar-cta" onClick={onGoApply}>
-              Apply free
-            </button>
-          ) : (
-            <button type="button" className="site-navbar-home-link" onClick={onGoHome}>
-              ← Home
-            </button>
-          )}
-        </div>
-      </nav>
-    </header>
+              <button
+                type="button"
+                className="button-primary site-navbar-mobile-apply"
+                onClick={() => {
+                  closeMobileMenu()
+                  onGoApply()
+                }}
+              >
+                Apply free
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </>
   )
 }
 
