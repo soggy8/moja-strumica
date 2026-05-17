@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-const WELCOME_DISMISSED_KEY = 'moja-strumica-welcome-dismissed'
-
 const launchDate = new Date('2026-06-10T00:00:00+02:00')
 
 const appShowcase = [
@@ -65,6 +63,8 @@ const stats = [
 
 const APPLICATION_API_URL = '/api/applications'
 const ADMIN_APPLICATIONS_API_URL = '/api/admin/applications'
+const PROMO_SPOTS_API_URL = '/api/promo-spots'
+const ADMIN_PROMO_SPOTS_API_URL = '/api/admin/promo-spots'
 
 async function readApiResponse(response) {
   const text = await response.text()
@@ -262,6 +262,11 @@ function AdminPage({ onBack }) {
   const [statusType, setStatusType] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [founderSpotsEdit, setFounderSpotsEdit] = useState('3')
+  const [earlyBirdSpotsEdit, setEarlyBirdSpotsEdit] = useState('7')
+  const [promoSaveMessage, setPromoSaveMessage] = useState('')
+  const [promoSaveType, setPromoSaveType] = useState('')
+  const [isSavingPromo, setIsSavingPromo] = useState(false)
 
   async function loadApplications(event) {
     event.preventDefault()
@@ -290,6 +295,18 @@ function AdminPage({ onBack }) {
       setIsLoggedIn(true)
       setStatusType('success')
       setStatusMessage(`Loaded ${loadedApplications.length} application(s).`)
+
+      try {
+        const promoResponse = await fetch(PROMO_SPOTS_API_URL)
+        const promoData = await readApiResponse(promoResponse)
+        if (promoResponse.ok && promoData) {
+          setFounderSpotsEdit(String(promoData.founderSpotsLeft ?? 3))
+          setEarlyBirdSpotsEdit(String(promoData.earlyBirdSpotsLeft ?? 7))
+        }
+      } catch {
+        setFounderSpotsEdit('3')
+        setEarlyBirdSpotsEdit('7')
+      }
     } catch (error) {
       setApplications([])
       setIsLoggedIn(false)
@@ -300,6 +317,60 @@ function AdminPage({ onBack }) {
     }
   }
 
+  async function savePromoSpots(event) {
+    event.preventDefault()
+    setPromoSaveMessage('')
+    setPromoSaveType('')
+
+    const founder = Number.parseInt(founderSpotsEdit, 10)
+    const earlyBird = Number.parseInt(earlyBirdSpotsEdit, 10)
+
+    if (
+      !Number.isFinite(founder) ||
+      !Number.isFinite(earlyBird) ||
+      founder < 0 ||
+      earlyBird < 0 ||
+      founder > 100 ||
+      earlyBird > 100
+    ) {
+      setPromoSaveType('error')
+      setPromoSaveMessage('Use whole numbers between 0 and 100 for both spot counts.')
+      return
+    }
+
+    setIsSavingPromo(true)
+
+    try {
+      const response = await fetch(ADMIN_PROMO_SPOTS_API_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': adminPassword,
+        },
+        body: JSON.stringify({
+          founderSpotsLeft: founder,
+          earlyBirdSpotsLeft: earlyBird,
+        }),
+      })
+
+      const result = await readApiResponse(response)
+
+      if (!response.ok) {
+        throw new Error(result?.error || 'Could not save promo spots.')
+      }
+
+      setFounderSpotsEdit(String(result.founderSpotsLeft))
+      setEarlyBirdSpotsEdit(String(result.earlyBirdSpotsLeft))
+      setPromoSaveType('success')
+      setPromoSaveMessage('Promo spot counts updated. The public pricing page will show these values on refresh.')
+    } catch (error) {
+      setPromoSaveType('error')
+      setPromoSaveMessage(error.message)
+    } finally {
+      setIsSavingPromo(false)
+    }
+  }
+
   function handleLogout() {
     setAdminPassword('')
     setShowPassword(false)
@@ -307,6 +378,10 @@ function AdminPage({ onBack }) {
     setStatusMessage('')
     setStatusType('')
     setIsLoggedIn(false)
+    setFounderSpotsEdit('3')
+    setEarlyBirdSpotsEdit('7')
+    setPromoSaveMessage('')
+    setPromoSaveType('')
   }
 
   function formatDate(dateValue) {
@@ -377,6 +452,42 @@ function AdminPage({ onBack }) {
 
           {statusMessage && <div className={`application-message ${statusType}`}>{statusMessage}</div>}
 
+          <form className="admin-promo-card" onSubmit={savePromoSpots}>
+            <h2 className="admin-promo-title">Pricing page — launch spots</h2>
+            <p className="admin-promo-desc">
+              These numbers appear on the public &quot;Launch promotions&quot; section. Lower them when a business
+              claims a founding or early-bird place.
+            </p>
+            <div className="admin-promo-fields">
+              <label>
+                Founding member spots left (max 3)
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={founderSpotsEdit}
+                  onChange={(e) => setFounderSpotsEdit(e.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                Early-bird spots left (max 7)
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={earlyBirdSpotsEdit}
+                  onChange={(e) => setEarlyBirdSpotsEdit(e.target.value)}
+                  required
+                />
+              </label>
+            </div>
+            <button type="submit" className="button-primary" disabled={isSavingPromo}>
+              {isSavingPromo ? 'Saving…' : 'Save spot counts'}
+            </button>
+            {promoSaveMessage && <div className={`application-message ${promoSaveType}`}>{promoSaveMessage}</div>}
+          </form>
+
           <div className="admin-table-card">
             {applications.length === 0 ? (
               <p className="admin-empty">No applications have been submitted yet.</p>
@@ -441,6 +552,9 @@ function SiteNavbar({ page, onGoHome, onGoApply }) {
               <a href="#features" className="site-navbar-link">
                 Features
               </a>
+              <a href="#pricing" className="site-navbar-link">
+                Pricing
+              </a>
             </>
           ) : (
             <span className={`site-navbar-pill-label ${page === 'admin' ? 'is-muted' : ''}`}>
@@ -475,6 +589,292 @@ function getTimeRemaining() {
   return { total, days, hours, minutes, seconds }
 }
 
+const PRICING_FOUNDER_CAP = 3
+const PRICING_EARLY_BIRD_CAP = 7
+
+function PricingSection({ founderSpotsLeft, earlyBirdSpotsLeft, onApply }) {
+  const founderOpen = Math.max(0, founderSpotsLeft)
+  const earlyOpen = Math.max(0, earlyBirdSpotsLeft)
+  const founderPct =
+    PRICING_FOUNDER_CAP > 0 ? (Math.min(founderOpen, PRICING_FOUNDER_CAP) / PRICING_FOUNDER_CAP) * 100 : 0
+  const earlyPct =
+    PRICING_EARLY_BIRD_CAP > 0 ? (Math.min(earlyOpen, PRICING_EARLY_BIRD_CAP) / PRICING_EARLY_BIRD_CAP) * 100 : 0
+
+  return (
+    <section className="section-block pricing-section" id="pricing">
+      <div className="section-heading">
+        <p className="eyebrow">For businesses</p>
+        <h2>Pricing and launch offers.</h2>
+        <p>
+          Monthly plans for visibility inside Moja Strumica. Prices are per month unless a promotion says otherwise.
+        </p>
+        <p className="mk-copy">
+          Месечни планови за присуство во Моја Струмица. Цените се месечно освен каде што е наведена промоција.
+        </p>
+      </div>
+
+      <div className="pricing-grid">
+        <article className="pricing-card">
+          <h3 className="pricing-card-title">Basic</h3>
+          <p className="pricing-card-price">
+            <span className="pricing-amount">€30</span>
+            <span className="pricing-period">/ month</span>
+          </p>
+          <ul className="pricing-list">
+            <li>Business account and profile in the app</li>
+            <li>One complimentary 15-second promo video for your business</li>
+            <li>Up to 3 notifications per month to all app users</li>
+          </ul>
+          <p className="pricing-card-mk">Основен профил, бесплатен 15-сек. промо видео, до 3 известувања месечно.</p>
+        </article>
+
+        <article className="pricing-card pricing-card--featured">
+          <p className="pricing-card-ribbon">Popular</p>
+          <h3 className="pricing-card-title">Premium</h3>
+          <p className="pricing-card-price">
+            <span className="pricing-amount">€60</span>
+            <span className="pricing-period">/ month</span>
+          </p>
+          <ul className="pricing-list">
+            <li>Business account and profile in the app</li>
+            <li>One complimentary 15-second promo video for your business</li>
+            <li>Up to 3 notifications per month to all app users</li>
+            <li>Complimentary small website for your business</li>
+            <li>Dedicated space for your advertisement in the app</li>
+          </ul>
+          <p className="pricing-card-mk">
+            Профил, 15-сек. промо видео, до 3 известувања месечно, мала веб-страница, рекламен простор во апликацијата.
+          </p>
+        </article>
+
+        <article className="pricing-card">
+          <h3 className="pricing-card-title">Ultra</h3>
+          <p className="pricing-card-price">
+            <span className="pricing-amount">€100</span>
+            <span className="pricing-period">/ month</span>
+          </p>
+          <ul className="pricing-list">
+            <li>Business account and profile in the app</li>
+            <li>One complimentary 15-second promo video for your business</li>
+            <li>Complimentary small website for your business</li>
+            <li>Advertising presence inside the app</li>
+            <li>Up to one push notification every day to all app users</li>
+            <li>Top priority placement for your in-app advertisement</li>
+          </ul>
+          <p className="pricing-card-mk">
+            Профил, промо видео, веб-страница, реклама во апликацијата, известување секој ден, највидна рекламна
+            позиција.
+          </p>
+        </article>
+      </div>
+
+      <div className="pricing-promos-block">
+        <div className="pricing-promos-intro-wrap">
+          <h3 className="pricing-promos-heading">Launch promotions</h3>
+          <p className="pricing-promos-intro">
+            Two limited <strong>pre-launch waves</strong> (founding + early bird), then a separate{' '}
+            <strong>hospitality bundle</strong> for food &amp; drink venues. Spots update when you refresh the page.
+          </p>
+          <ul className="pricing-promos-legend" aria-label="How to read this section">
+            <li>
+              <span className="pricing-legend-key" aria-hidden="true">
+                1
+              </span>
+              <span>Wave 1 — rarest slots, longest free period.</span>
+            </li>
+            <li>
+              <span className="pricing-legend-key" aria-hidden="true">
+                2
+              </span>
+              <span>Wave 2 — still before launch, different billing timing.</span>
+            </li>
+            <li>
+              <span className="pricing-legend-key pricing-legend-key--special" aria-hidden="true">
+                ★
+              </span>
+              <span>Special — menus + QR, then pick Premium or Ultra pricing.</span>
+            </li>
+          </ul>
+        </div>
+
+        <div className="pricing-promos-limited">
+          <article className="pricing-promo-card pricing-promo-card--accent">
+            <div className="pricing-promo-card-head">
+              <span className="pricing-promo-step" aria-hidden="true">
+                1
+              </span>
+              <div className="pricing-promo-head-text">
+                <p className="pricing-promo-eyebrow">Wave 1 · max {PRICING_FOUNDER_CAP} businesses</p>
+                <h4 className="pricing-promo-title">Founding members</h4>
+              </div>
+            </div>
+
+            <div
+              className="pricing-spots-widget"
+              role="group"
+              aria-label={`Founding member spots: ${founderOpen} still available (out of ${PRICING_FOUNDER_CAP})`}
+            >
+              <div className="pricing-spots-widget-top">
+                <span className="pricing-spots-widget-label">Availability</span>
+                <span className="pricing-spots-fraction">
+                  <strong>{founderOpen}</strong>
+                  <span className="pricing-spots-inline-suffix">
+                    of {PRICING_FOUNDER_CAP} founding spots still open
+                  </span>
+                </span>
+              </div>
+              <div
+                className="pricing-spots-bar"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={PRICING_FOUNDER_CAP}
+                aria-valuenow={Math.min(founderOpen, PRICING_FOUNDER_CAP)}
+                aria-label="Share of founding slots still open"
+              >
+                <div className="pricing-spots-bar-fill" style={{ width: `${founderPct}%` }} />
+              </div>
+            </div>
+
+            <ol className="pricing-promo-timeline">
+              <li>
+                <span className="pricing-timeline-label">Months 1–3</span>
+                <span className="pricing-timeline-value">Free</span>
+              </li>
+              <li>
+                <span className="pricing-timeline-label">Months 4–6</span>
+                <span className="pricing-timeline-value">Ultra €50/mo (3 paid months)</span>
+              </li>
+              <li>
+                <span className="pricing-timeline-label">From month 7</span>
+                <span className="pricing-timeline-value">Ultra €50/mo while active</span>
+              </li>
+            </ol>
+
+            <p className="pricing-promo-body">
+              The first three businesses get <strong>three months free</strong>. The <strong>next three months</strong> are
+              each billed at <strong>Ultra €50/month</strong>. After that, the <strong>same €50/month Ultra</strong>{' '}
+              continues for as long as you stay subscribed.
+            </p>
+            <p className="pricing-promo-mk">
+              Првите 3 месеци бесплатно, потоа <strong>следните 3 месеци по 50 € месечно</strong> (Ултра), потоа{' '}
+              <strong>истата цена</strong> додека сте активни.
+            </p>
+          </article>
+
+          <article className="pricing-promo-card pricing-promo-card--wave2">
+            <div className="pricing-promo-card-head">
+              <span className="pricing-promo-step" aria-hidden="true">
+                2
+              </span>
+              <div className="pricing-promo-head-text">
+                <p className="pricing-promo-eyebrow">Wave 2 · max {PRICING_EARLY_BIRD_CAP} businesses</p>
+                <h4 className="pricing-promo-title">Early bird</h4>
+              </div>
+            </div>
+
+            <div
+              className="pricing-spots-widget"
+              role="group"
+              aria-label={`Early bird spots: ${earlyOpen} still available (out of ${PRICING_EARLY_BIRD_CAP})`}
+            >
+              <div className="pricing-spots-widget-top">
+                <span className="pricing-spots-widget-label">Availability</span>
+                <span className="pricing-spots-fraction">
+                  <strong>{earlyOpen}</strong>
+                  <span className="pricing-spots-inline-suffix">
+                    of {PRICING_EARLY_BIRD_CAP} early-bird spots still open
+                  </span>
+                </span>
+              </div>
+              <div
+                className="pricing-spots-bar pricing-spots-bar--wave2"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={PRICING_EARLY_BIRD_CAP}
+                aria-valuenow={Math.min(earlyOpen, PRICING_EARLY_BIRD_CAP)}
+                aria-label="Share of early bird slots still open"
+              >
+                <div className="pricing-spots-bar-fill" style={{ width: `${earlyPct}%` }} />
+              </div>
+            </div>
+
+            <ul className="pricing-promo-highlights">
+              <li>
+                <strong>Billing starts</strong> at public launch
+              </li>
+              <li>
+                <strong>Ultra locks in</strong> at €50/month while your subscription stays active
+              </li>
+            </ul>
+
+            <p className="pricing-promo-body">
+              The next seven businesses <strong>start paying from launch</strong> and keep{' '}
+              <strong>Ultra for €50/month</strong> for the lifetime of an active subscription.
+            </p>
+            <p className="pricing-promo-mk">
+              Следните 7: плаќање од лансирање и заклучена Ултра цена од 50 € месечно додека сте активни.
+            </p>
+          </article>
+        </div>
+
+        <article className="pricing-promo-card pricing-promo-card--hospitality">
+          <div className="pricing-promo-card-head pricing-promo-card-head--wide">
+            <span className="pricing-promo-step pricing-promo-step--special" aria-hidden="true">
+              ★
+            </span>
+            <div className="pricing-promo-head-text">
+              <p className="pricing-promo-eyebrow">Hospitality · menus &amp; QR</p>
+              <h4 className="pricing-promo-title">Venue bundle (restaurants, cafés, bars)</h4>
+            </div>
+            <p className="pricing-promo-price-tag">
+              <span className="pricing-promo-price-amount">€300</span>
+              <span className="pricing-promo-price-note">one-time setup</span>
+            </p>
+          </div>
+
+          <div className="pricing-promo-hospitality-grid">
+            <div className="pricing-promo-hospitality-includes">
+              <p className="pricing-promo-includes-title">Included in setup</p>
+              <ul className="pricing-promo-checklist">
+                <li>Website menu page</li>
+                <li>Matching in-app menu</li>
+                <li>QR codes for tables &amp; print</li>
+              </ul>
+            </div>
+            <div className="pricing-promo-hospitality-after">
+              <p className="pricing-promo-includes-title">Then choose monthly</p>
+              <ul className="pricing-promo-checklist pricing-promo-checklist--compact">
+                <li>
+                  <strong>Premium</strong> — €50/mo
+                </li>
+                <li>
+                  <strong>Ultra</strong> — €70/mo
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <p className="pricing-promo-body pricing-promo-body--flush">
+            Built for venues that want guests scanning once and seeing the same offers on the web and in the app.
+          </p>
+          <p className="pricing-promo-mk">
+            Угостителство: 300 € еднократно за веб и апликациско мени + QR. Потоа Premium 50 € или Ultra 70 € месечно.
+          </p>
+        </article>
+
+        <div className="pricing-cta-row">
+          <button type="button" className="button-primary" onClick={onApply}>
+            Apply as a business
+          </button>
+          <p className="pricing-cta-note">
+            Not sure which offer applies? Note it in your application and we will confirm before you pay anything.
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function WelcomeModal({ open, onApply, onDismiss }) {
   useEffect(() => {
     if (!open) return
@@ -503,12 +903,26 @@ function WelcomeModal({ open, onApply, onDismiss }) {
       aria-labelledby="welcome-dialog-title"
       aria-describedby="welcome-dialog-desc"
       lang="mk"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onDismiss()
+      }}
     >
       <div className="welcome-dialog welcome-dialog--mk">
-        <p className="eyebrow">Пред лансирање</p>
+        <div className="welcome-dialog-header">
+          <span className="welcome-dialog-brand" aria-hidden="true">
+            Moja Strumica
+          </span>
+          <button type="button" className="welcome-close-btn" onClick={onDismiss} aria-label="Затвори го прозорецот">
+            ×
+          </button>
+        </div>
+
+        <p className="welcome-eyebrow">Проект за градот · пред лансирање</p>
         <h2 id="welcome-dialog-title" className="welcome-dialog-title">
-          Аплицирај бесплатно
+          Добредојдовте
         </h2>
+        <p className="welcome-dialog-subtitle">Краток преглед пред стартот на апликацијата.</p>
+
         <div className="welcome-dialog-block">
           <p className="welcome-dialog-label">Што е Моја Струмица?</p>
           <p id="welcome-dialog-desc" className="welcome-dialog-lead">
@@ -518,24 +932,23 @@ function WelcomeModal({ open, onApply, onDismiss }) {
         </div>
 
         <div className="welcome-dialog-block">
-          <p className="welcome-dialog-label">За што аплицираш?</p>
+          <p className="welcome-dialog-label">Заинтересиран бизнис?</p>
           <p className="welcome-dialog-lead">
-            Резервираш <strong>бесплатно место</strong> за твојот бизнис уште пред стартот — продавница, ресторан, салон,
-            услуга или бренд — за да те наоѓаат жителите на Струмица директно во апликацијата, без посредници.
+            Можеш да резервираш <strong>бесплатно место</strong> уште пред стартот — продавница, ресторан, салон, услуга
+            или бренд — за да те наоѓаат жителите на Струмица директно во апликацијата.
           </p>
         </div>
 
-        <p className="welcome-dialog-hook">
-          Аплицирањето е бесплатно · Придружи се рано додека има слободни места
-        </p>
+        <p className="welcome-dialog-hook">Аплицирањето е бесплатно. Прозорецов можете да го затворите во секое време.</p>
 
-        <button type="button" className="welcome-apply-btn" onClick={onApply}>
-          Аплицирај сега — бесплатно
-        </button>
-
-        <button type="button" className="welcome-dismiss-link" onClick={onDismiss}>
-          Продолжи со прегледување
-        </button>
+        <div className="welcome-dialog-actions">
+          <button type="button" className="welcome-apply-btn" onClick={onApply}>
+            Аплицирај бесплатно
+          </button>
+          <button type="button" className="welcome-dismiss-btn" onClick={onDismiss}>
+            Само преглед на сајтот
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -543,7 +956,8 @@ function WelcomeModal({ open, onApply, onDismiss }) {
 
 function App() {
   const [activePage, setActivePage] = useState('home')
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+  const [showWelcomeModal, setShowWelcomeModal] = useState(true)
+  const [promoSpots, setPromoSpots] = useState({ founder: 3, earlyBird: 7 })
   const [timeRemaining, setTimeRemaining] = useState(() => getTimeRemaining())
   const countdownItems = useMemo(
     () => [
@@ -564,40 +978,39 @@ function App() {
   }, [])
 
   useEffect(() => {
-    try {
-      const forceWelcome = new URLSearchParams(window.location.search).get('welcome') === '1'
-      if (forceWelcome) {
-        localStorage.removeItem(WELCOME_DISMISSED_KEY)
-        setShowWelcomeModal(true)
-        return
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const response = await fetch(PROMO_SPOTS_API_URL)
+        const data = await readApiResponse(response)
+        if (cancelled || !response.ok || !data) return
+        setPromoSpots({
+          founder: data.founderSpotsLeft ?? 3,
+          earlyBird: data.earlyBirdSpotsLeft ?? 7,
+        })
+      } catch {
+        /* keep defaults */
       }
-      if (!localStorage.getItem(WELCOME_DISMISSED_KEY)) setShowWelcomeModal(true)
-    } catch {
-      setShowWelcomeModal(true)
+    })()
+
+    return () => {
+      cancelled = true
     }
   }, [])
 
   const dismissWelcomeModal = useCallback(() => {
-    try {
-      localStorage.setItem(WELCOME_DISMISSED_KEY, '1')
-    } catch {
-      /* ignore */
-    }
     setShowWelcomeModal(false)
   }, [])
 
   const applyFromWelcomeModal = useCallback(() => {
-    try {
-      localStorage.setItem(WELCOME_DISMISSED_KEY, '1')
-    } catch {
-      /* ignore */
-    }
     setShowWelcomeModal(false)
     setActivePage('application')
   }, [])
 
   function goHome() {
     setActivePage('home')
+    setShowWelcomeModal(true)
   }
 
   if (activePage === 'application') {
@@ -644,6 +1057,9 @@ function App() {
               </a>
               <a href="#features" className="button-secondary">
                 See what is coming
+              </a>
+              <a href="#pricing" className="button-secondary">
+                Pricing
               </a>
             </div>
           </div>
@@ -732,6 +1148,12 @@ function App() {
             ))}
           </div>
         </section>
+
+        <PricingSection
+          founderSpotsLeft={promoSpots.founder}
+          earlyBirdSpotsLeft={promoSpots.earlyBird}
+          onApply={() => setActivePage('application')}
+        />
 
         <section className="cta-panel">
           <div>

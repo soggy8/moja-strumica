@@ -58,8 +58,29 @@ def init_db():
             "ALTER TABLE applications ADD COLUMN company_name TEXT NOT NULL DEFAULT ''"
         )
 
+    init_promo_spots_table(connection)
+
     connection.commit()
     connection.close()
+
+
+def init_promo_spots_table(connection):
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS promo_spots (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            founder_spots_left INTEGER NOT NULL DEFAULT 3,
+            early_bird_spots_left INTEGER NOT NULL DEFAULT 7,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    connection.execute(
+        """
+        INSERT OR IGNORE INTO promo_spots (id, founder_spots_left, early_bird_spots_left)
+        VALUES (1, 3, 7)
+        """
+    )
 
 
 def database_error_response(error):
@@ -169,6 +190,97 @@ def create_application():
             "An error occurred while processing the application",
             error,
         )
+
+
+@app.route("/api/promo-spots", methods=["GET"])
+def get_promo_spots():
+    try:
+        connection = get_db_connection()
+        init_promo_spots_table(connection)
+        connection.commit()
+        row = connection.execute(
+            """
+            SELECT founder_spots_left, early_bird_spots_left
+            FROM promo_spots
+            WHERE id = 1
+            """
+        ).fetchone()
+        connection.close()
+
+        if not row:
+            return (
+                jsonify({"founderSpotsLeft": 3, "earlyBirdSpotsLeft": 7}),
+                200,
+            )
+
+        return (
+            jsonify(
+                {
+                    "founderSpotsLeft": int(row["founder_spots_left"]),
+                    "earlyBirdSpotsLeft": int(row["early_bird_spots_left"]),
+                }
+            ),
+            200,
+        )
+
+    except sqlite3.OperationalError as error:
+        return database_error_response(error)
+
+    except Exception as error:
+        return server_error("Could not load promo spots", error)
+
+
+@app.route("/api/admin/promo-spots", methods=["PUT"])
+def update_promo_spots():
+    admin_password = request.headers.get("X-Admin-Password", "")
+
+    if admin_password != ADMIN_PASSWORD:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    try:
+        founder = int(data.get("founderSpotsLeft"))
+        early_bird = int(data.get("earlyBirdSpotsLeft"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "founderSpotsLeft and earlyBirdSpotsLeft must be integers"}), 400
+
+    if founder < 0 or early_bird < 0 or founder > 100 or early_bird > 100:
+        return jsonify({"error": "Values must be between 0 and 100"}), 400
+
+    try:
+        connection = get_db_connection()
+        init_promo_spots_table(connection)
+        connection.execute(
+            """
+            UPDATE promo_spots
+            SET founder_spots_left = ?,
+                early_bird_spots_left = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = 1
+            """,
+            (founder, early_bird),
+        )
+        connection.commit()
+        connection.close()
+
+        return (
+            jsonify(
+                {
+                    "founderSpotsLeft": founder,
+                    "earlyBirdSpotsLeft": early_bird,
+                }
+            ),
+            200,
+        )
+
+    except sqlite3.OperationalError as error:
+        return database_error_response(error)
+
+    except Exception as error:
+        return server_error("Could not update promo spots", error)
 
 
 @app.route("/api/admin/applications", methods=["GET"])
