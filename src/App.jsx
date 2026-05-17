@@ -508,7 +508,7 @@ function WelcomeModal({ open, onApply, onDismiss }) {
         </h2>
         <p id="welcome-dialog-desc" className="welcome-dialog-lead">
           You are applying to list your business inside Moja Strumica before launch — so customers can find shops, restaurants,
-          salons, services, and brands in Strumica’s new city super app starting June 1.
+          salons, services, and brands in Strumica’s new city super app starting June 10.
         </p>
         <p className="welcome-dialog-lead welcome-dialog-lead-mk">
           Аплицираш за место во апликацијата пред лансирање — твојот бренд се појавува каде луѓето пребаруваат локални
@@ -606,7 +606,7 @@ function App() {
         <WelcomeModal open={showWelcomeModal} onApply={applyFromWelcomeModal} onDismiss={dismissWelcomeModal} />
         <section className="hero section-grid">
           <div className="hero-copy">
-            <p className="eyebrow">Coming to Strumica on June 1</p>
+            <p className="eyebrow">Coming to Strumica on June 10</p>
             <h1>Moja Strumica is almost here.</h1>
             <p className="lead">
               The city super app that brings local news, food delivery, shopping, prices, services, events, salons,
@@ -664,8 +664,8 @@ function App() {
         <section className="section-block" id="countdown">
           <div className="section-heading">
             <p className="eyebrow">The countdown has started</p>
-            <h2>Launching June 1, 2026.</h2>
-            <p>Лансирање на 1 јуни 2026. Струмица добива една апликација за секојдневниот градски живот.</p>
+            <h2>Launching June 10, 2026.</h2>
+            <p>Лансирање на 10 јуни 2026. Струмица добива една апликација за секојдневниот градски живот.</p>
           </div>
 
           <div className="countdown-grid" aria-live="polite">
@@ -708,11 +708,11 @@ function App() {
             <p className="eyebrow">Be ready</p>
             <h2>Strumica, your app is coming.</h2>
             <p>
-              Stay close. On June 1, Moja Strumica starts bringing the city together in a faster, simpler way, with
+              Stay close. On June 10, Moja Strumica starts bringing the city together in a faster, simpler way, with
               more of the places, services, events, and daily decisions people actually need.
             </p>
             <p className="mk-copy">
-              Биди подготвен. На 1 јуни, Моја Струмица почнува да го поврзува градот на побрз и поедноставен начин,
+              Биди подготвен. На 10 јуни, Моја Струмица почнува да го поврзува градот на побрз и поедноставен начин,
               со повеќе места, услуги, настани и секојдневни одлуки што навистина им требаат на луѓето.
             </p>
           </div>
