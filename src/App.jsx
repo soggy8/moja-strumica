@@ -4,54 +4,56 @@ const WELCOME_DISMISSED_KEY = 'moja-strumica-welcome-dismissed'
 
 const launchDate = new Date('2026-06-10T00:00:00+02:00')
 
-const features = [
+const appShowcase = [
   {
-    title: 'News portals',
-    mkTitle: 'Новински портали',
-    text: 'Follow local headlines, announcements, and everything people in Strumica are talking about.',
-    mkText: 'Следи локални вести, соопштенија и се за што зборува Струмица.',
+    eyebrow: 'Home / Дома',
+    title: 'Start with what matters today',
+    mkTitle: 'Започни со она што ти треба денес',
+    text: 'Promoted local spots, a fast path into every category, space for short offers, and a peek at city events—all from one calm home screen.',
+    mkText:
+      'Промовирани локални места, брз пристап до категории, место за кратки понуди и преглед на градски настани—се на еден екран.',
+    image: '/screenshots/home.png',
+    imageAlt: 'Moja Strumica home screen with promoted offers, categories, and city events',
   },
   {
-    title: 'Food delivery',
-    mkTitle: 'Достава на храна',
-    text: 'Order from favorite restaurants, cafes, and bakeries without jumping between different apps.',
-    mkText: 'Нарачувај од омилени ресторани, кафулиња и пекари без менување апликации.',
+    eyebrow: 'News / Вести',
+    title: 'Stay close to what Strumica is talking about',
+    mkTitle: 'Следи што зборува Струмица',
+    text: 'A curated feed for local headlines, announcements, weekend plans, and business updates—with clear tags, dates, and read-more links.',
+    mkText:
+      'Курирана лента за локални наслови, соопштенија, викенд планови и бизнис вести—со ознаки, датуми и линк „прочитај повеќе“.',
+    image: '/screenshots/news.png',
+    imageAlt: 'News feed in Moja Strumica listing local stories and announcements',
   },
   {
-    title: 'Shopping',
-    mkTitle: 'Пазарување',
-    text: 'Discover local stores, promotions, new products, and everyday essentials around the city.',
-    mkText: 'Откривај локални продавници, промоции, нови производи и секојдневни потреби.',
+    eyebrow: 'Categories / Категории',
+    title: 'Everyday city topics, organized for quick jumps',
+    mkTitle: 'Градски теми, подредени за брз избор',
+    text: 'News, food, shopping, price checks, salons, and events each get their own entry point—so browsing feels simple, not scattered across browsers and groups.',
+    mkText:
+      'Вести, храна, пазарување, цени, салони и настани имаат свои влезови—наместо да лутеш низ груби и групи.',
+    image: '/screenshots/categories.png',
+    imageAlt: 'Category list in Moja Strumica with icons for news, food, shopping, and more',
   },
   {
-    title: 'Price checks',
-    mkTitle: 'Проверка на цени',
-    text: 'Compare prices faster and find the best option before you buy.',
-    mkText: 'Споредувај цени побрзо и најди ја најдобрата опција пред купување.',
+    eyebrow: 'Food / Храна',
+    title: 'See who is open, then act in one tap',
+    mkTitle: 'Види кој е отворен и продолжи со еден допир',
+    text: 'Rich photos, open status, favorites, and action chips for delivery or menu links help you decide fast—without leaving the app.',
+    mkText:
+      'Фотографии, статус „отворено“, омилени и копчиња за достава или мени те водат побрзо—без скокање меѓу апликации.',
+    image: '/screenshots/food.png',
+    imageAlt: 'Food listings with images, open badges, and delivery or menu tags',
   },
   {
-    title: 'Barbers and salons',
-    mkTitle: 'Бербери и салони',
-    text: 'Find barbers, cosmetic salons, beauty studios, wellness spots, and appointment-ready services.',
-    mkText: 'Најди бербери, козметички салони, студија за убавина, велнес места и услуги со термин.',
-  },
-  {
-    title: 'Concerts and events',
-    mkTitle: 'Концерти и настани',
-    text: 'See upcoming concerts, parties, festivals, sports, culture, and weekend plans before they pass you by.',
-    mkText: 'Следи концерти, забави, фестивали, спорт, култура и викенд планови пред да поминат.',
-  },
-  {
-    title: 'Kids and families',
-    mkTitle: 'Детски и семејни настани',
-    text: 'Discover kids events, workshops, birthday places, activities, playgrounds, and family-friendly ideas.',
-    mkText: 'Откриј детски настани, работилници, родендени, активности, игралишта и семејни идеи.',
-  },
-  {
-    title: 'City directory',
-    mkTitle: 'Градски именик',
-    text: 'Explore pharmacies, doctors, gyms, mechanics, taxis, real estate, jobs, ads, and useful local contacts.',
-    mkText: 'Пребарај аптеки, доктори, теретани, мајстори, такси, недвижности, работа, огласи и локални контакти.',
+    eyebrow: 'Place profile / Профил на место',
+    title: 'From story to call, map, or menu',
+    mkTitle: 'Од опис до повик, мапа или мени',
+    text: 'Each place can show highlights, tags, today’s hours, and direct actions—call, Viber, maps, and menu—plus save it to favorites.',
+    mkText:
+      'Секое место може да покаже клучни точки, тагови, денешни часови и директни акции—повик, Viber, мапа и мени—и зачувување во омилени.',
+    image: '/screenshots/place.png',
+    imageAlt: 'Business profile with photos, key points, hours, and contact actions',
   },
 ]
 
@@ -699,22 +701,33 @@ function App() {
         <section className="section-block feature-section" id="features">
           <div className="section-heading">
             <p className="eyebrow">Built for everyday city life</p>
-            <h2>One app for almost everything Strumica needs.</h2>
+            <h2>See the app before launch.</h2>
             <p>
-              From news, food, shopping, and prices to barbers, cosmetic salons, concerts, kids events, jobs, taxis,
-              doctors, gyms, and local services. Моја Струмица ќе ги поврзе луѓето, бизнисите и информациите што го
-              движат градот секој ден.
+              Real screens from the build: home, news, categories, food discovery, and business profiles. Моја Струмица
+              ги врзува луѓето, бизнисите и информациите што го движат градот—овде е како тоа изгледа во раката.
             </p>
           </div>
 
-          <div className="feature-grid">
-            {features.map((feature) => (
-              <article className="feature-card" key={feature.title}>
-                <div className="feature-dot" />
-                <h3>{feature.title}</h3>
-                <h4>{feature.mkTitle}</h4>
-                <p>{feature.text}</p>
-                <p className="mk-copy">{feature.mkText}</p>
+          <div className="showcase-stack">
+            {appShowcase.map((item, index) => (
+              <article
+                className={`showcase-row${index % 2 === 1 ? ' showcase-row--reverse' : ''}`}
+                key={item.title}
+              >
+                <div className="showcase-copy">
+                  <p className="eyebrow">{item.eyebrow}</p>
+                  <h3 className="showcase-title">{item.title}</h3>
+                  <h4 className="showcase-mk-title">{item.mkTitle}</h4>
+                  <p>{item.text}</p>
+                  <p className="mk-copy">{item.mkText}</p>
+                </div>
+                <figure className="showcase-device">
+                  <div className="phone-frame phone-frame--screenshot">
+                    <div className="phone-screen">
+                      <img src={item.image} alt={item.imageAlt} width={390} height={844} loading="lazy" decoding="async" />
+                    </div>
+                  </div>
+                </figure>
               </article>
             ))}
           </div>
