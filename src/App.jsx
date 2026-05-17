@@ -500,28 +500,39 @@ function WelcomeModal({ open, onApply, onDismiss }) {
       aria-modal="true"
       aria-labelledby="welcome-dialog-title"
       aria-describedby="welcome-dialog-desc"
+      lang="mk"
     >
-      <div className="welcome-dialog">
-        <p className="eyebrow">Pre-launch offer</p>
+      <div className="welcome-dialog welcome-dialog--mk">
+        <p className="eyebrow">Пред лансирање</p>
         <h2 id="welcome-dialog-title" className="welcome-dialog-title">
-          Apply for free
+          Аплицирај бесплатно
         </h2>
-        <p id="welcome-dialog-desc" className="welcome-dialog-lead">
-          You are applying to list your business inside Moja Strumica before launch — so customers can find shops, restaurants,
-          salons, services, and brands in Strumica’s new city super app starting June 10.
+        <div className="welcome-dialog-block">
+          <p className="welcome-dialog-label">Што е Моја Струмица?</p>
+          <p id="welcome-dialog-desc" className="welcome-dialog-lead">
+            Градска супер апликација за Струмица — локални вести, достава на храна, пазарување, цени, настани, услуги и
+            бизниси на едно место. Стартува на <strong>10 јуни 2026</strong>.
+          </p>
+        </div>
+
+        <div className="welcome-dialog-block">
+          <p className="welcome-dialog-label">За што аплицираш?</p>
+          <p className="welcome-dialog-lead">
+            Резервираш <strong>бесплатно место</strong> за твојот бизнис уште пред стартот — продавница, ресторан, салон,
+            услуга или бренд — за да те наоѓаат жителите на Струмица директно во апликацијата, без посредници.
+          </p>
+        </div>
+
+        <p className="welcome-dialog-hook">
+          Аплицирањето е бесплатно · Придружи се рано додека има слободни места
         </p>
-        <p className="welcome-dialog-lead welcome-dialog-lead-mk">
-          Аплицираш за место во апликацијата пред лансирање — твојот бренд се појавува каде луѓето пребаруваат локални
-          бизниси во градот.
-        </p>
-        <p className="welcome-dialog-hook">Free forever to apply · Join early while spots are still open</p>
 
         <button type="button" className="welcome-apply-btn" onClick={onApply}>
-          Apply now — free
+          Аплицирај сега — бесплатно
         </button>
 
         <button type="button" className="welcome-dismiss-link" onClick={onDismiss}>
-          Continue browsing
+          Продолжи со прегледување
         </button>
       </div>
     </div>
@@ -552,6 +563,12 @@ function App() {
 
   useEffect(() => {
     try {
+      const forceWelcome = new URLSearchParams(window.location.search).get('welcome') === '1'
+      if (forceWelcome) {
+        localStorage.removeItem(WELCOME_DISMISSED_KEY)
+        setShowWelcomeModal(true)
+        return
+      }
       if (!localStorage.getItem(WELCOME_DISMISSED_KEY)) setShowWelcomeModal(true)
     } catch {
       setShowWelcomeModal(true)

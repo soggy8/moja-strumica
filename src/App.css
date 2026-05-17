@@ -930,18 +930,87 @@ button:disabled {
 
 .welcome-dialog {
   position: relative;
+  overflow: hidden;
   width: min(560px, 100%);
   padding: clamp(32px, 5vw, 48px) clamp(26px, 4vw, 40px);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(242, 188, 34, 0.38);
   border-radius: 36px;
-  background: var(--card);
-  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  background:
+    linear-gradient(
+      165deg,
+      rgba(255, 227, 154, 0.55) 0%,
+      rgba(255, 248, 220, 0.92) 22%,
+      rgba(255, 255, 255, 0.94) 58%,
+      rgba(246, 244, 239, 0.98) 100%
+    );
+  box-shadow:
+    var(--shadow),
+    0 0 0 1px rgba(242, 188, 34, 0.14),
+    0 18px 48px rgba(242, 188, 34, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(18px);
 }
 
+.welcome-dialog::before {
+  position: absolute;
+  top: 0;
+  left: 12%;
+  width: 76%;
+  height: 5px;
+  border-radius: 0 0 10px 10px;
+  background: linear-gradient(90deg, transparent, var(--yellow), var(--yellow-soft), var(--yellow), transparent);
+  content: "";
+}
+
+.welcome-dialog::after {
+  position: absolute;
+  top: -80px;
+  right: -60px;
+  z-index: -1;
+  width: 220px;
+  height: 220px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(242, 188, 34, 0.35), transparent 68%);
+  content: "";
+  pointer-events: none;
+}
+
 .welcome-dialog .eyebrow {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 16px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--yellow), var(--yellow-soft));
+  box-shadow: 0 8px 22px rgba(242, 188, 34, 0.32);
+  color: var(--navy);
   text-align: center;
+}
+
+.welcome-dialog--mk .welcome-dialog-title {
+  margin: 0 0 22px;
+  font-size: clamp(2rem, 6.5vw, 3.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.welcome-dialog-block {
   margin-bottom: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(242, 188, 34, 0.3);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 227, 154, 0.28), rgba(255, 255, 255, 0.78));
+  text-align: left;
+}
+
+.welcome-dialog-label {
+  margin: 0 0 8px;
+  color: var(--navy);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .welcome-dialog-title {
@@ -955,12 +1024,22 @@ button:disabled {
 }
 
 .welcome-dialog-lead {
-  margin: 0 0 14px;
+  margin: 0;
   max-width: none;
   color: #314963;
-  font-size: clamp(1rem, 2.4vw, 1.13rem);
+  font-size: clamp(1rem, 2.4vw, 1.08rem);
   font-weight: 700;
-  line-height: 1.62;
+  line-height: 1.65;
+  text-align: left;
+}
+
+.welcome-dialog-lead strong {
+  color: var(--navy);
+  font-weight: 900;
+}
+
+.welcome-dialog--mk .welcome-dialog-hook {
+  margin-top: 4px;
   text-align: center;
 }
 
@@ -971,13 +1050,18 @@ button:disabled {
 
 .welcome-dialog-hook {
   margin: 0 0 26px;
-  color: #b01020;
+  padding: 14px 18px;
+  border: 1px solid rgba(242, 188, 34, 0.42);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(242, 188, 34, 0.22), rgba(255, 227, 154, 0.42));
+  color: var(--navy);
   font-size: clamp(1rem, 2.8vw, 1.22rem);
   font-weight: 900;
   line-height: 1.38;
   text-align: center;
   letter-spacing: 0.01em;
   text-wrap: balance;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .welcome-apply-btn {
